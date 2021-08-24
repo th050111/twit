@@ -1,64 +1,46 @@
-import Twit from "components/Twit";
 import { dbService } from "myBase";
 import React, { useEffect, useState } from "react";
 
 export default ({ userObj }) => {
   //작성중인 twit
-  const [twit, setTwit] = useState("");
+  const [name, setName] = useState("");
   //저장된 twit들
-  const [twits, setTwits] = useState([]);
-
-
-  useEffect(() => {
-    //해당컬렉션에대한 이벤트 리스너
-    dbService.collection("twits").orderBy('createAt','desc').limit(10).onSnapshot(snapshot => {
-	 
-	 
-      //문서의 데이터와 id의 객체를 배열로 저장
-      const twitArray = snapshot.docs.map(doc => {
-       return ({
-          id: doc.id, 
-          ...doc.data()
-        });
-      })
-      setTwits(twitArray);
-    })
-  }, [])
+  const [password, setPassword] = useState("");
+	const [birthday, setBirthday] = useState("");
+ 
   const onSubmit = async (event) => {
     event.preventDefault();
-	 const data = await dbService.collection("names").doc(`${userObj.uid}`).get();
-		const name = data.data() === undefined? "익명" : data.data().name;
     //컬렉션에 추가(객체)
-    await dbService.collection("twits").add({
-	 	writerName:name,
-      text: twit,
-      createAt: Date.now(),
-      creatorId: userObj.uid,
+    await dbService.collection("users").doc(name+"").set({
+	 	name:name,
+      password: password,
+      birthday: birthday,
     });
-    setTwit("");
-  };
+	 }
 
-  const onChange = (event) => {
+  const onChangeName = (event) => {
     //event.target의 value를 value로
     const { target: { value } } = event;
-    setTwit(value);
+    setName(value);
+  }
+  const onChangePassword = (event) => {
+    //event.target의 value를 value로
+    const { target: { value } } = event;
+    setPassword(value);
+  }
+  const onChangeBirthday = (event) => {
+    //event.target의 value를 value로
+    const { target: { value } } = event;
+    setBirthday(value);
   }
   return (
     <div>
       <form onSubmit={onSubmit}>
-        <input value={twit} onChange={onChange} type="text" placeholder="What's on your mind?" maxLength={120} />
-        <input type="submit" value="twit" />
+        <input value={name} onChange={onChangeName} type="text" placeholder="이름" minLength={4} maxLength={4} />
+		  <input value={birthday} onChange={onChangeBirthday} type="text" placeholder="생년월일(6자리)" minLength={6} maxLength={6} />
+		  <input value={password} onChange={onChangePassword} type="text" placeholder="비밀번호" minLength={4} maxLength={4} />
+        <input type="submit" value="save" />
       </form>
-      <div>
-        {twits.map(twit =>
-          <Twit 
-          key={twit.id} 
-          twitObj={twit} 
-          isOwner={twit.creatorId === userObj.uid}
-			 creatorName={twit.writerName}
-          />
-        )}
-      </div>
     </div >
   )
 }
